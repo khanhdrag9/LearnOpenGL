@@ -19,11 +19,24 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		printf("Fail to init Glad\n");
 		return -1;
 	}
+	glClearColor(0.8, 0.5, 0.8, 1.0);
 
+	//init shader
+
+	//loop
+	while (!glfwWindowShouldClose(window))
+	{
+		glClear(GL_COLOR_BUFFER_BIT);
+
+
+		glfwSwapBuffers(window);
+	}
+
+	glfwTerminate();
 	return 0;
 }
