@@ -99,14 +99,12 @@ int main()
 
 		glUseProgram(program);
 		int color = glGetUniformLocation(program, "aColor");
-	//	printf("%d", color);
 		glUniform4f(color, 1.0, greenValue, 0.0, 1.0);
 
 		glBindVertexArray(VAO);
-
-		//glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glBindVertexArray(0);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
