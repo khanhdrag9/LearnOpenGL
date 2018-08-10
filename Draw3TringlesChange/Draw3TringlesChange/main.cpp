@@ -1,12 +1,40 @@
 #include <stdio.h>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include <math.h>
 
 void BindVertex(float *vertex, unsigned int *indices, GLuint& vbo, GLuint& vao, GLuint& ebo, GLuint program);
-void Draw(GLuint VAO)
+void Draw(GLuint& VAO, GLuint program)
 {
+	glUseProgram(program);
+
+	static int count;
+	float time = glfwGetTime();
+	float color = sin(time) / 2.f + 0.5f;
+
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, 0);
+	
+	
+	if (count == 0)
+	{
+		int uniform = glGetUniformLocation(program, "uColor1");
+		glUniform4f(uniform, color, 0.0, 0.0, 1.0);
+		count++;
+	}
+	if (count == 1)
+	{
+		int uniform = glGetUniformLocation(program, "uColor2");
+		glUniform4f(uniform, 0.0, color, 0.0, 1.0);
+		count++;
+	}
+	if (count == 2)
+	{
+		int uniform = glGetUniformLocation(program, "uColor3");
+		glUniform4f(uniform, 0.0, 0.0, color, 1.0);
+		count = 0;
+	}
+
 	//glDrawArrays(GL_TRIANGLES, 0, 2);
 	glBindVertexArray(0);
 }
@@ -34,11 +62,14 @@ int main()
 
 	//shader
 	const char* vs = "#version 330 core\nlayout(location = 0) in vec2 aPos;void main(){gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}";
-	const char* fs = "#version 330 core\nout vec4 Color;uniform vec4 uColor;void main(){Color = vec4(1.0, 0.0, 1.0, 1.0);}";
+	const char* fs[3] = { "#version 330 core\nout vec4 Color;uniform vec4 uColor1;void main(){Color = uColor1;}",
+		"#version 330 core\nout vec4 Color;uniform vec4 uColor2;void main(){Color = uColor2;}",
+		"#version 330 core\nout vec4 Color;uniform vec4 uColor3;void main(){Color = uColor3;}"
+	};
 
 	int success;
 
-	GLuint vShader, fShader, program[3];
+	GLuint vShader, fShader[3], program[3];
 	vShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vShader, 1, &vs, NULL);
 	glCompileShader(vShader);
@@ -49,22 +80,24 @@ int main()
 		glGetShaderInfoLog(vShader, 255, NULL, info);
 		printf("ERROR::VERTEX::SHADER\n%s\n", info);
 	}
-	fShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fShader, 1, &fs, NULL);
-	glCompileShader(fShader);
-	glGetShaderiv(fShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		char info[255];
-		glGetShaderInfoLog(fShader, 255, NULL, info);
-		printf("ERROR::FRAGMENT::SHADER\n%s\n", info);
-	}
+	
 
 	for (int i = 0; i < 3; i++)
 	{
+		fShader[i] = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fShader[i], 1, &fs[i], NULL);
+		glCompileShader(fShader[i]);
+		glGetShaderiv(fShader[i], GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			char info[255];
+			glGetShaderInfoLog(fShader[i], 255, NULL, info);
+			printf("ERROR::FRAGMENT::SHADER\n%s\n", info);
+		}
+
 		program[i] = glCreateProgram();
 		glAttachShader(program[i], vShader);
-		glAttachShader(program[i], fShader);
+		glAttachShader(program[i], fShader[i]);
 		glLinkProgram(program[i]);
 		glGetProgramiv(program[i], GL_COMPILE_STATUS, &success);
 		if (!success)
@@ -73,28 +106,30 @@ int main()
 			glGetProgramInfoLog(program[i], 255, NULL, info);
 			printf("ERROR::PROGRAM\n%s\n", info);
 		}
+		glDeleteShader(fShader[i]);
 	}
 	glDeleteShader(vShader);
-	glDeleteShader(fShader);
+	
+	
 	
 	//vertex
 	float s1[] = {
 		-1.0, 0.0,
 		-0.75, -0.5,
 		-0.5, 0.0,
-		-0.75, 0.25
+		-0.75, 0.5
 	};
 	float s2[] = {
 		-0.25, 0.0,
-		0, -0.25, 
+		0, -0.5, 
 		0.25, 0.0,
-		0.0, 0.25
+		0.0, 0.5
 	};
 	float s3[] = {
-		0.75, 0.0, 
-		0., -0.25, 
-		-0.5, 0.0,
-		-0.75, 0.25
+		0.5, 0.0, 
+		0.75, -0.5, 
+		1.0, 0.0,
+		0.75, 0.5
 	};
 	unsigned int indices[] = { 0, 1,2,3 };
 
@@ -103,7 +138,7 @@ int main()
 	BindVertex(s2, indices, VBOs[1], VAOs[1], EBOs[1], program[1]);
 	BindVertex(s3, indices, VBOs[2], VAOs[2], EBOs[2], program[2]);
 
-	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -111,7 +146,7 @@ int main()
 		
 		for (int i = 0; i < 3; i++)
 		{
-			Draw(VAOs[0]);
+			Draw(VAOs[i], program[i]);
 		}
 
 		glfwSwapBuffers(window);
