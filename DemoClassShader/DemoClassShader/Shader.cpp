@@ -36,7 +36,7 @@ void Shader::SetIntUniform(char* name, int value)
 }
 void Shader::SetFloatUniform(char* name, float value)
 {
-	glUniform1i(glGetUniformLocation(program, name), value);
+	glUniform1f(glGetUniformLocation(program, name), value);
 }
 
 int Shader::loadShader(GLenum type,const char* path)
